@@ -4,6 +4,7 @@ import AdminLayout from '@/layouts/AdminLayout';
 import PublicLayout from '@/layouts/PublicLayout';
 
 import LoginPage from '@/features/auth/LoginPage';
+import ForgotPasswordPage from '@/features/forgotPassword/ForgotPasswordPage';
 import DashboardPage from '@/features/dashboard/DashboardPage';
 import CandidateListPage from '@/features/candidates/CandidateListPage';
 import QuestionListPage from '@/features/questions/QuestionListPage';
@@ -23,6 +24,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
       <Route element={<PublicLayout />}>
         <Route path="/test/:token" element={<TestEntryPage />} />

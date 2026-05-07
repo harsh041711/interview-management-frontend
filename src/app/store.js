@@ -7,6 +7,7 @@ import testReducer from '@/features/test/testSlice';
 import interviewerReducer from '@/features/interviewers/interviewerSlice';
 import interviewReducer from '@/features/interviews/interviewSlice';
 import interviewViewReducer from '@/features/interviewView/interviewViewSlice';
+import accountSetupReducer from '@/features/accountSetup/accountSetupSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     interviewers: interviewerReducer,
     interviews: interviewReducer,
     interviewView: interviewViewReducer,
+    accountSetup: accountSetupReducer,
   },
   middleware: (getDefault) =>
     getDefault({

@@ -11,6 +11,7 @@ const NAV = [
   { to: '/submissions',  label: 'Submissions',  icon: '☰' },
   { to: '/interviewers', label: 'Interviewers', icon: '◈' },
   { to: '/interviews',   label: 'Interviews',   icon: '⌖' },
+  { to: '/admin/review-edit-requests', label: 'Edit requests', icon: '✎' },
 ];
 
 export default function AdminLayout() {

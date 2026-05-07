@@ -24,6 +24,7 @@ import InterviewViewPage from '@/features/interviewView/InterviewViewPage';
 
 import InterviewerDashboardPage from '@/features/myInterviews/InterviewerDashboardPage';
 import MyInterviewDetailPage from '@/features/myInterviews/MyInterviewDetailPage';
+import ReviewEditRequestsPage from '@/features/reviewEditRequests/ReviewEditRequestsPage';
 
 export default function AppRoutes() {
   return (
@@ -55,6 +56,7 @@ export default function AppRoutes() {
         <Route path="/interviewers" element={<InterviewerListPage />} />
         <Route path="/interviews" element={<InterviewListPage />} />
         <Route path="/interviews/:id" element={<InterviewDetailPage />} />
+        <Route path="/admin/review-edit-requests" element={<ReviewEditRequestsPage />} />
       </Route>
 
       <Route

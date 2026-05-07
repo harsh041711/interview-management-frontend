@@ -26,6 +26,7 @@ const initialForm = () => ({
   questionCount: 10,
   durationMinutes: computeAutoDuration(10),
   durationManual: false,
+  experience: 'mid',
 });
 
 export default function CreateCandidateModal({ open, onClose }) {
@@ -131,6 +132,7 @@ export default function CreateCandidateModal({ open, onClose }) {
       techStack: [...stack],
       questionCount: Number(form.questionCount) || 10,
       durationMinutes: Number(form.durationMinutes) || computeAutoDuration(form.questionCount),
+      experience: form.experience,
     }));
     if (!createCandidate.fulfilled.match(action)) {
       setBusy(false);
@@ -261,6 +263,18 @@ export default function CreateCandidateModal({ open, onClose }) {
                 ))}
               </div>
             )}
+          </div>
+          <div className="field">
+            <span className="field__label">Experience</span>
+            <div className="create-candidate__exp">
+              {['entry', 'mid', 'senior'].map((e) => (
+                <button type="button" key={e}
+                  className={`chip-toggle ${form.experience === e ? 'is-on' : ''}`}
+                  onClick={() => setForm({ ...form, experience: e })}>
+                  {e}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="field">
             <span className="field__label">Resume <span className="field__optional">(optional)</span></span>

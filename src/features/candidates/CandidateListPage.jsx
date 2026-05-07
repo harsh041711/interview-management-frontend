@@ -24,7 +24,7 @@ export default function CandidateListPage() {
   const dispatch = useDispatch();
   const { push } = useToast();
   const { list, status, meta, error } = useSelector((s) => s.candidates);
-  const [filters, setFilters] = useState({ status: '', search: '', page: 1 });
+  const [filters, setFilters] = useState({ status: '', search: '', experience: '', page: 1 });
   const [createOpen, setCreateOpen] = useState(false);
   const [expanded, setExpanded] = useState(new Set());
 
@@ -32,6 +32,7 @@ export default function CandidateListPage() {
     const params = { page: filters.page, limit: meta.limit };
     if (filters.status) params.status = filters.status;
     if (filters.search.trim()) params.search = filters.search.trim();
+    if (filters.experience) params.experience = filters.experience;
     dispatch(fetchCandidates(params));
   }, [dispatch, filters, meta.limit]);
 
@@ -116,6 +117,15 @@ export default function CandidateListPage() {
             <option key={s || 'all'} value={s}>{s ? s.replace('_', ' ') : 'All statuses'}</option>
           ))}
         </select>
+        <select
+          value={filters.experience}
+          onChange={(e) => setFilters((f) => ({ ...f, experience: e.target.value, page: 1 }))}
+        >
+          <option value="">All experience</option>
+          <option value="entry">Entry</option>
+          <option value="mid">Mid</option>
+          <option value="senior">Senior</option>
+        </select>
       </section>
 
       {status === 'loading' && list.length === 0 ? (
@@ -157,6 +167,7 @@ export default function CandidateListPage() {
                     <td>
                       <div className="candidates-table__chips">
                         {(c.techStack || []).map((t) => <span key={t} className="chip">{t}</span>)}
+                        {c.experience && <span className="chip chip--exp">{c.experience}</span>}
                       </div>
                       {c.resumeUrl ? (
                         <a

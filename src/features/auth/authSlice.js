@@ -20,8 +20,9 @@ export const loginThunk = createAsyncThunk('auth/login', async (payload, { rejec
   try {
     const result = await authApi.login(payload);
     setToken(result.token);
-    setStoredAdmin(result.admin);
-    return result;
+    const admin = result.admin || result.user;
+    setStoredAdmin(admin);
+    return { token: result.token, admin };
   } catch (err) {
     return rejectWithValue(extractError(err));
   }

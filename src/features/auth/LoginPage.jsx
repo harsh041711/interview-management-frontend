@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import { clearAuthError, loginThunk } from './authSlice';
@@ -10,7 +10,7 @@ export default function LoginPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { token, status, error } = useSelector((s) => s.auth);
+  const { token, status, error, admin } = useSelector((s) => s.auth);
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [touched, setTouched] = useState({});
@@ -37,7 +37,10 @@ export default function LoginPage() {
     if (hasError) return;
     const action = await dispatch(loginThunk(form));
     if (loginThunk.fulfilled.match(action)) {
-      const dest = location.state?.from?.pathname || '/dashboard';
+      const userRole = action.payload.admin?.role;
+      const dest = userRole === 'interviewer'
+        ? '/interviewer/dashboard'
+        : (location.state?.from?.pathname || '/dashboard');
       navigate(dest, { replace: true });
     }
   };
@@ -77,6 +80,11 @@ export default function LoginPage() {
           <Button type="submit" loading={status === 'loading'} fullWidth>
             Sign in
           </Button>
+          <div style={{ textAlign: 'right', marginTop: 8 }}>
+            <Link to="/forgot-password" style={{ fontSize: 13, color: 'var(--color-primary, #2563eb)', textDecoration: 'none' }}>
+              Forgot password?
+            </Link>
+          </div>
         </form>
       </div>
     </div>

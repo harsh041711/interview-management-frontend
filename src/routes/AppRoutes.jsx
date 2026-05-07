@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
 import AdminLayout from '@/layouts/AdminLayout';
 import PublicLayout from '@/layouts/PublicLayout';
+import InterviewerLayout from '@/layouts/InterviewerLayout';
 
 import LoginPage from '@/features/auth/LoginPage';
 import ForgotPasswordPage from '@/features/forgotPassword/ForgotPasswordPage';
@@ -20,6 +21,8 @@ import PhotoCapturePage from '@/features/test/PhotoCapturePage';
 import TestPage from '@/features/test/TestPage';
 import SubmittedPage from '@/features/test/SubmittedPage';
 import InterviewViewPage from '@/features/interviewView/InterviewViewPage';
+
+import InterviewerDashboardPage from '@/features/myInterviews/InterviewerDashboardPage';
 
 export default function AppRoutes() {
   return (
@@ -51,6 +54,16 @@ export default function AppRoutes() {
         <Route path="/interviewers" element={<InterviewerListPage />} />
         <Route path="/interviews" element={<InterviewListPage />} />
         <Route path="/interviews/:id" element={<InterviewDetailPage />} />
+      </Route>
+
+      <Route
+        element={(
+          <ProtectedRoute role="interviewer">
+            <InterviewerLayout />
+          </ProtectedRoute>
+        )}
+      >
+        <Route path="/interviewer/dashboard" element={<InterviewerDashboardPage />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

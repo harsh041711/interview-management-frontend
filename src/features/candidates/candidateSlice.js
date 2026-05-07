@@ -86,6 +86,22 @@ export const removeCandidateResume = createAsyncThunk(
   },
 );
 
+export const selectCandidate = createAsyncThunk(
+  'candidates/select',
+  async (id, { rejectWithValue }) => {
+    try { return await candidateApi.select(id); }
+    catch (err) { return rejectWithValue(extractError(err)); }
+  },
+);
+
+export const rejectCandidate = createAsyncThunk(
+  'candidates/reject',
+  async ({ id, note }, { rejectWithValue }) => {
+    try { return await candidateApi.reject(id, note); }
+    catch (err) { return rejectWithValue(extractError(err)); }
+  },
+);
+
 const candidateSlice = createSlice({
   name: 'candidates',
   initialState,
@@ -141,6 +157,16 @@ const candidateSlice = createSlice({
         if (state.selected?.id === c.id) state.selected = c;
       })
       .addCase(removeCandidateResume.fulfilled, (state, action) => {
+        const c = action.payload.candidate;
+        state.list = state.list.map((x) => (x.id === c.id ? c : x));
+        if (state.selected?.id === c.id) state.selected = c;
+      })
+      .addCase(selectCandidate.fulfilled, (state, action) => {
+        const c = action.payload.candidate;
+        state.list = state.list.map((x) => (x.id === c.id ? c : x));
+        if (state.selected?.id === c.id) state.selected = c;
+      })
+      .addCase(rejectCandidate.fulfilled, (state, action) => {
         const c = action.payload.candidate;
         state.list = state.list.map((x) => (x.id === c.id ? c : x));
         if (state.selected?.id === c.id) state.selected = c;

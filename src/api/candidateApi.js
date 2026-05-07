@@ -7,6 +7,8 @@ export const candidateApi = {
   create: (payload) => apiClient.post('/candidates', payload).then((r) => r.data.data),
   regenerateToken: (id) => apiClient.post(`/candidates/${id}/regenerate-token`).then((r) => r.data.data),
   resendInvite: (id) => apiClient.post(`/candidates/${id}/resend-invite`).then((r) => r.data.data),
+  select: (id) => apiClient.post(`/candidates/${id}/select`).then((r) => r.data.data),
+  reject: (id, note) => apiClient.post(`/candidates/${id}/reject`, { note }).then((r) => r.data.data),
   remove: (id) => apiClient.delete(`/candidates/${id}`).then((r) => r.data),
   uploadResume: (id, file) => {
     const fd = new FormData();

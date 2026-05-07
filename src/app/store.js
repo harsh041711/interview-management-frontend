@@ -10,6 +10,7 @@ import interviewViewReducer from '@/features/interviewView/interviewViewSlice';
 import accountSetupReducer from '@/features/accountSetup/accountSetupSlice';
 import myInterviewsReducer from '@/features/myInterviews/myInterviewsSlice';
 import reviewEditRequestsReducer from '@/features/reviewEditRequests/reviewEditRequestsSlice';
+import reviewsReducer from '@/features/reviews/reviewSlice';
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
     accountSetup: accountSetupReducer,
     myInterviews: myInterviewsReducer,
     reviewEditRequests: reviewEditRequestsReducer,
+    reviews: reviewsReducer,
   },
   middleware: (getDefault) =>
     getDefault({

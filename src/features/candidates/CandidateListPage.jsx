@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Button from '@/components/common/Button';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -153,8 +153,8 @@ export default function CandidateListPage() {
             </thead>
             <tbody>
               {list.map((c) => (
-                <>
-                  <tr key={c.id}>
+                <Fragment key={c.id}>
+                  <tr>
                     <td>
                       <div className="candidates-table__primary">
                         {c.photoUrl ? <img src={c.photoUrl} alt="" /> : <span className="candidates-table__avatar">{c.name?.[0]}</span>}
@@ -221,7 +221,7 @@ export default function CandidateListPage() {
                       <td colSpan={6}><ReviewPanel candidateId={c.id} /></td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

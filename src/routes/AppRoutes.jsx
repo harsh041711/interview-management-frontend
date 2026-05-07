@@ -23,6 +23,7 @@ import SubmittedPage from '@/features/test/SubmittedPage';
 import InterviewViewPage from '@/features/interviewView/InterviewViewPage';
 
 import InterviewerDashboardPage from '@/features/myInterviews/InterviewerDashboardPage';
+import MyInterviewDetailPage from '@/features/myInterviews/MyInterviewDetailPage';
 
 export default function AppRoutes() {
   return (
@@ -64,6 +65,7 @@ export default function AppRoutes() {
         )}
       >
         <Route path="/interviewer/dashboard" element={<InterviewerDashboardPage />} />
+        <Route path="/interviewer/interviews/:id" element={<MyInterviewDetailPage />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

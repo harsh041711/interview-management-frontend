@@ -145,6 +145,11 @@ export default function CodingTestPage() {
   };
 
   const timerWarn = remainingMs !== null && remainingMs < 60_000;
+  const tabSwClass = tabSwitches === 0
+    ? ''
+    : tabSwitches <= 3
+      ? 'coding-test__tabsw--warn'
+      : 'coding-test__tabsw--danger';
 
   return (
     <div className="coding-test">
@@ -152,66 +157,111 @@ export default function CodingTestPage() {
         <div>
           <div className="coding-test__title">Coding Challenge — {data.candidate?.name || 'Candidate'}</div>
           <div className="coding-test__counter">
-            Problem {current + 1} of {data.problems.length} · Tab-switches: {tabSwitches}
+            <span>Problem {current + 1} of {data.problems.length}</span>
+            <span className={`coding-test__tabsw ${tabSwClass}`}>
+              👁 Tab switches: {tabSwitches}
+            </span>
           </div>
         </div>
         <div className={`coding-test__timer ${timerWarn ? 'coding-test__timer--warn' : ''}`}>
-          ⏱ {remainingMs !== null ? formatMs(remainingMs) : '…'}
+          <span>⏱</span>
+          <span>{remainingMs !== null ? formatMs(remainingMs) : '…'}</span>
         </div>
       </div>
 
-      <div className="coding-test__problem">
-        <h2>{problem.title} · {problem.difficulty}</h2>
-        <div className="coding-test__problem-desc">{problem.description}</div>
-        {problem.sampleCases?.length > 0 && (
-          <div className="coding-test__problem-samples">
-            {problem.sampleCases.map((tc, i) => (
-              <div key={i}>
-                <div>Sample input:  {JSON.stringify(tc.stdin)}</div>
-                <div>Sample output: {JSON.stringify(tc.expectedStdout)}</div>
-              </div>
-            ))}
+      <div className="coding-test__body">
+        <div className="coding-test__left">
+          <div className="coding-test__problem-head">
+            <h2 className="coding-test__problem-title">{problem.title}</h2>
+            <span className={`coding-test__difficulty coding-test__difficulty--${problem.difficulty}`}>
+              {problem.difficulty}
+            </span>
           </div>
-        )}
-      </div>
+          <div className="coding-test__problem-desc">{problem.description}</div>
 
-      <div className="coding-test__lang">
-        <label>Language:</label>
-        <select value={state.language} onChange={(e) => setLang(e.target.value)} style={{ padding: '6px 10px' }}>
-          {problem.supportedLanguages.map((l) => (
-            <option key={l} value={l}>{LANG_LABEL[l]}</option>
-          ))}
-        </select>
-      </div>
+          {problem.sampleCases?.length > 0 && (
+            <>
+              <div className="coding-test__samples-title">Examples</div>
+              {problem.sampleCases.map((tc, i) => (
+                <div key={i} className="coding-test__sample">
+                  <div className="coding-test__sample-row">
+                    <span className="coding-test__sample-label">Input</span>
+                    <span className="coding-test__sample-value">{tc.stdin || '(empty)'}</span>
+                  </div>
+                  <div className="coding-test__sample-row">
+                    <span className="coding-test__sample-label">Output</span>
+                    <span className="coding-test__sample-value">{tc.expectedStdout || '(empty)'}</span>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
 
-      <div className="coding-test__editor">
-        <Editor
-          height="380px"
-          language={MONACO_LANG[state.language]}
-          value={state.code}
-          onChange={(v) => setCode(v || '')}
-          options={{
-            minimap: { enabled: false },
-            contextmenu: false,
-            fontSize: 13,
-            automaticLayout: true,
-          }}
-          onMount={(editor) => {
-            editor.onDidPaste(() => {
-              push({ type: 'warn', message: 'Pasting is disabled. Please type your code.' });
-            });
-          }}
-        />
-      </div>
+        <div className="coding-test__right">
+          <div className="coding-test__editor-bar">
+            <div className="coding-test__lang-wrap">
+              <span>Language:</span>
+              <select
+                className="coding-test__lang-select"
+                value={state.language}
+                onChange={(e) => setLang(e.target.value)}
+              >
+                {problem.supportedLanguages.map((l) => (
+                  <option key={l} value={l}>{LANG_LABEL[l]}</option>
+                ))}
+              </select>
+            </div>
+            <span className="coding-test__editor-hint">
+              Pasting disabled · Tab switches tracked
+            </span>
+          </div>
 
-      <div className="coding-test__actions">
-        <Button variant="secondary" disabled={current === 0} onClick={() => setCurrent((c) => c - 1)}>Previous</Button>
-        {current < data.problems.length - 1 && (
-          <Button onClick={() => setCurrent((c) => c + 1)}>Next</Button>
-        )}
-        {current === data.problems.length - 1 && (
-          <Button onClick={() => doSubmit(false)} loading={submitting}>Submit and finish</Button>
-        )}
+          <div className="coding-test__editor-area">
+            <Editor
+              height="100%"
+              theme="vs-dark"
+              language={MONACO_LANG[state.language]}
+              value={state.code}
+              onChange={(v) => setCode(v || '')}
+              options={{
+                minimap: { enabled: false },
+                contextmenu: false,
+                fontSize: 14,
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                padding: { top: 12 },
+              }}
+              onMount={(editor) => {
+                editor.onDidPaste(() => {
+                  push({ type: 'warn', message: 'Pasting is disabled. Please type your code.' });
+                });
+              }}
+            />
+          </div>
+
+          <div className="coding-test__footer">
+            <div className="coding-test__progress">
+              {data.problems.map((_, i) => (
+                <span
+                  key={i}
+                  className={`coding-test__progress-dot ${i === current ? 'is-current' : i < current ? 'is-done' : ''}`}
+                />
+              ))}
+              <span style={{ marginLeft: 8 }}>{current + 1} / {data.problems.length}</span>
+            </div>
+            <div className="coding-test__actions">
+              <Button variant="secondary" disabled={current === 0} onClick={() => setCurrent((c) => c - 1)}>← Previous</Button>
+              {current < data.problems.length - 1 && (
+                <Button onClick={() => setCurrent((c) => c + 1)}>Next →</Button>
+              )}
+              {current === data.problems.length - 1 && (
+                <Button onClick={() => doSubmit(false)} loading={submitting}>Submit and finish</Button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <Modal

@@ -5,7 +5,10 @@ import Button from '@/components/common/Button';
 import EmptyState from '@/components/common/EmptyState';
 import Loader from '@/components/common/Loader';
 import StatusBadge from '@/components/common/StatusBadge';
+import { useToast } from '@/components/common/Toast';
 import { formatScheduledAt } from '@/utils/datetime';
+import { interviewApi } from '@/api/interviewApi';
+import { exportRowsAsCsv } from '@/utils/exportCsv';
 import { fetchInterviews } from './interviewSlice';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import './InterviewListPage.scss';
@@ -22,10 +25,12 @@ const STATUS_LABELS = {
 export default function InterviewListPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { push } = useToast();
   const { list, status, meta, error } = useSelector((s) => s.interviews);
 
   const [filters, setFilters] = useState({ status: '', from: '', to: '', page: 1 });
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const params = { page: filters.page, limit: meta.limit };
@@ -35,6 +40,44 @@ export default function InterviewListPage() {
     dispatch(fetchInterviews(params));
   }, [dispatch, filters, meta.limit]);
 
+  const onExport = async () => {
+    setExporting(true);
+    try {
+      const params = { page: 1, limit: 10000 };
+      if (filters.status) params.status = filters.status;
+      if (filters.from) params.from = filters.from;
+      if (filters.to) params.to = filters.to;
+      const res = await interviewApi.list(params);
+      const rows = res.items || res.list || [];
+      if (rows.length === 0) {
+        push({ type: 'warn', message: 'No interviews to export' });
+        return;
+      }
+      exportRowsAsCsv('interviews', rows, [
+        { key: 'scheduledAt', header: 'Scheduled at' },
+        { key: 'durationMinutes', header: 'Duration (min)' },
+        { key: 'status', header: 'Status' },
+        { key: 'candidateName', header: 'Candidate name', value: (r) => r.candidate?.name || '' },
+        { key: 'candidateEmail', header: 'Candidate email', value: (r) => r.candidate?.email || '' },
+        { key: 'interviewerName', header: 'Interviewer name', value: (r) => r.interviewer?.name || '' },
+        { key: 'interviewerEmail', header: 'Interviewer email', value: (r) => r.interviewer?.email || '' },
+        { key: 'interviewerExpertise', header: 'Interviewer expertise', value: (r) => (r.interviewer?.expertise || []).join('; ') },
+        { key: 'meetingUrl', header: 'Meeting URL' },
+        { key: 'notes', header: 'Notes', value: (r) => r.notes || '' },
+        { key: 'completedAt', header: 'Completed at', value: (r) => r.completedAt || '' },
+        { key: 'completionNote', header: 'Completion note', value: (r) => r.completionNote || '' },
+        { key: 'cancelledAt', header: 'Cancelled at', value: (r) => r.cancelledAt || '' },
+        { key: 'cancelReason', header: 'Cancel reason', value: (r) => r.cancelReason || '' },
+        { key: 'createdAt', header: 'Created at' },
+      ]);
+      push({ type: 'success', message: `Exported ${rows.length} interview(s)` });
+    } catch (err) {
+      push({ type: 'error', message: err.response?.data?.message || 'Export failed' });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="interviews-page">
       <header className="interviews-page__head">
@@ -42,7 +85,10 @@ export default function InterviewListPage() {
           <h1>Interviews</h1>
           <p className="interviews-page__sub">{meta.total} total · page {meta.page}/{meta.totalPages}</p>
         </div>
-        <Button onClick={() => setScheduleOpen(true)}>+ Schedule</Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button variant="secondary" onClick={onExport} loading={exporting}>↓ Export CSV</Button>
+          <Button onClick={() => setScheduleOpen(true)}>+ Schedule</Button>
+        </div>
       </header>
 
       <section className="interviews-page__filters">

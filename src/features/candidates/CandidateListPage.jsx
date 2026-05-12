@@ -17,6 +17,7 @@ import {
 } from './candidateSlice';
 import Modal from '@/components/common/Modal';
 import { candidateApi } from '@/api/candidateApi';
+import { exportRowsAsCsv } from '@/utils/exportCsv';
 import CreateCandidateModal from './CreateCandidateModal';
 import './CandidateListPage.scss';
 
@@ -29,6 +30,7 @@ export default function CandidateListPage() {
   const { list, status, meta, error } = useSelector((s) => s.candidates);
   const [filters, setFilters] = useState({ status: '', search: '', experience: '', page: 1 });
   const [createOpen, setCreateOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [actBusy, setActBusy] = useState({ id: null, action: null }); // { id, action: 'approve' | 'decline' | 'rescreen' | 'sendTest' }
   const [confirmOverride, setConfirmOverride] = useState(null); // { id, action: 'approve' | 'decline', candidate }
 
@@ -159,6 +161,41 @@ export default function CandidateListPage() {
     }
   };
 
+  const onExport = async () => {
+    setExporting(true);
+    try {
+      const params = { page: 1, limit: 10000 };
+      if (filters.status) params.status = filters.status;
+      if (filters.search.trim()) params.search = filters.search.trim();
+      if (filters.experience) params.experience = filters.experience;
+      const res = await candidateApi.list(params);
+      const rows = res.items || res.list || [];
+      if (rows.length === 0) {
+        push({ type: 'warn', message: 'No candidates to export' });
+        return;
+      }
+      exportRowsAsCsv('candidates', rows, [
+        { key: 'name', header: 'Name' },
+        { key: 'email', header: 'Email' },
+        { key: 'techStack', header: 'Tech stack', value: (r) => (r.techStack || []).join('; ') },
+        { key: 'experience', header: 'Experience' },
+        { key: 'status', header: 'Status' },
+        { key: 'matchPercent', header: 'Resume match %', value: (r) => r.screening?.matchPercent ?? '' },
+        { key: 'screeningStatus', header: 'Screening', value: (r) => r.screening?.status ?? '' },
+        { key: 'resumeUrl', header: 'Resume URL', value: (r) => r.resumeUrl || '' },
+        { key: 'testUrl', header: 'Test link', value: (r) => r.testUrl || '' },
+        { key: 'codingTestStatus', header: 'Coding test', value: (r) => r.codingTest?.outcome || (r.codingTest?.sentAt ? 'sent' : '') },
+        { key: 'codingTestSubmittedAt', header: 'Coding submitted at', value: (r) => r.codingTest?.submittedAt || '' },
+        { key: 'createdAt', header: 'Created at' },
+      ]);
+      push({ type: 'success', message: `Exported ${rows.length} candidate(s)` });
+    } catch (err) {
+      push({ type: 'error', message: err.response?.data?.message || 'Export failed' });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="candidates-page">
       <header className="candidates-page__head">
@@ -166,7 +203,10 @@ export default function CandidateListPage() {
           <h1>Candidates</h1>
           <p className="candidates-page__sub">{meta.total} total · page {meta.page}/{meta.totalPages}</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>+ New candidate</Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button variant="secondary" onClick={onExport} loading={exporting}>↓ Export CSV</Button>
+          <Button onClick={() => setCreateOpen(true)}>+ New candidate</Button>
+        </div>
       </header>
 
       <section className="candidates-page__filters">

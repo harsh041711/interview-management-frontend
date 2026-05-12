@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
+import ReactMarkdown from 'react-markdown';
 import Button from '@/components/common/Button';
 import Loader from '@/components/common/Loader';
 import EmptyState from '@/components/common/EmptyState';
@@ -172,25 +173,33 @@ export default function CodingTestPage() {
       <div className="coding-test__body">
         <div className="coding-test__left">
           <div className="coding-test__problem-head">
-            <h2 className="coding-test__problem-title">{problem.title}</h2>
-            <span className={`coding-test__difficulty coding-test__difficulty--${problem.difficulty}`}>
-              {problem.difficulty}
-            </span>
+            <div className="coding-test__problem-row">
+              <h2 className="coding-test__problem-title">{problem.title}</h2>
+              <span className={`coding-test__difficulty coding-test__difficulty--${problem.difficulty}`}>
+                {problem.difficulty}
+              </span>
+            </div>
           </div>
-          <div className="coding-test__problem-desc">{problem.description}</div>
+          <div className="coding-test__problem-desc">
+            <ReactMarkdown>{problem.description || ''}</ReactMarkdown>
+          </div>
 
           {problem.sampleCases?.length > 0 && (
             <>
-              <div className="coding-test__samples-title">Examples</div>
+              <div className="coding-test__samples-title">
+                <span>Examples</span>
+                <span className="coding-test__samples-count">{problem.sampleCases.length}</span>
+              </div>
               {problem.sampleCases.map((tc, i) => (
                 <div key={i} className="coding-test__sample">
+                  <div className="coding-test__sample-head">Example {i + 1}</div>
                   <div className="coding-test__sample-row">
                     <span className="coding-test__sample-label">Input</span>
-                    <span className="coding-test__sample-value">{tc.stdin || '(empty)'}</span>
+                    <pre className="coding-test__sample-value">{tc.stdin || '(empty)'}</pre>
                   </div>
                   <div className="coding-test__sample-row">
                     <span className="coding-test__sample-label">Output</span>
-                    <span className="coding-test__sample-value">{tc.expectedStdout || '(empty)'}</span>
+                    <pre className="coding-test__sample-value">{tc.expectedStdout || '(empty)'}</pre>
                   </div>
                 </div>
               ))}

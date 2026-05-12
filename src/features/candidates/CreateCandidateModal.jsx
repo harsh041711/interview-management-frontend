@@ -4,7 +4,6 @@ import Modal from '@/components/common/Modal';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import { useToast } from '@/components/common/Toast';
-import { copyToClipboard } from '@/utils/formatters';
 import { createCandidate, uploadCandidateResume } from './candidateSlice';
 import { fetchTechStacks } from '@/features/questions/questionSlice';
 import './CreateCandidateModal.scss';
@@ -37,7 +36,6 @@ export default function CreateCandidateModal({ open, onClose }) {
   const [stack, setStack] = useState(new Set());
   const [stackInput, setStackInput] = useState('');
   const [busy, setBusy] = useState(false);
-  const [created, setCreated] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
   const resumeInputRef = useRef(null);
 
@@ -56,7 +54,6 @@ export default function CreateCandidateModal({ open, onClose }) {
     setForm(initialForm());
     setStack(new Set());
     setStackInput('');
-    setCreated(null);
     setResumeFile(null);
     if (resumeInputRef.current) resumeInputRef.current.value = '';
   };
@@ -139,13 +136,12 @@ export default function CreateCandidateModal({ open, onClose }) {
       push({ type: 'error', message: action.payload?.message || 'Failed to create candidate' });
       return;
     }
-    let candidate = action.payload.candidate;
+    const candidate = action.payload.candidate;
 
     if (resumeFile) {
       const upload = await dispatch(uploadCandidateResume({ id: candidate.id, file: resumeFile }));
       if (uploadCandidateResume.fulfilled.match(upload)) {
-        candidate = upload.payload.candidate;
-        push({ type: 'success', message: 'Candidate created — resume attached' });
+        push({ type: 'success', message: 'Candidate created — resume uploaded, screening in progress' });
       } else {
         push({
           type: 'warn',
@@ -153,45 +149,26 @@ export default function CreateCandidateModal({ open, onClose }) {
         });
       }
     } else {
-      push({ type: 'success', message: 'Candidate created' });
+      push({ type: 'success', message: 'Candidate created — upload a resume to start screening' });
     }
 
     setBusy(false);
-    setCreated(candidate);
-  };
-
-  const onCopy = async () => {
-    const ok = await copyToClipboard(created.testUrl);
-    push({ type: ok ? 'success' : 'error', message: ok ? 'Test link copied' : 'Failed to copy' });
+    handleClose();
   };
 
   return (
     <Modal
       open={open}
       onClose={handleClose}
-      title={created ? 'Test link generated' : 'New candidate'}
+      title="New candidate"
       footer={
-        created ? (
-          <Button onClick={handleClose}>Done</Button>
-        ) : (
-          <>
-            <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-            <Button onClick={submit} loading={busy}>Create candidate</Button>
-          </>
-        )
+        <>
+          <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+          <Button onClick={submit} loading={busy}>Create candidate</Button>
+        </>
       }
     >
-      {created ? (
-        <div className="created-summary">
-          <p>
-            Share this secure link with <strong>{created.name}</strong>.
-            They will answer <strong>{created.questionCount}</strong> question{created.questionCount === 1 ? '' : 's'}
-            in <strong>{created.durationMinutes}</strong> minute{created.durationMinutes === 1 ? '' : 's'}.
-          </p>
-          <code className="created-summary__url">{created.testUrl}</code>
-          <Button onClick={onCopy} fullWidth variant="secondary">Copy link</Button>
-        </div>
-      ) : (
+      {(
         <form onSubmit={submit} className="create-candidate" noValidate>
           <Input
             label="Full name"

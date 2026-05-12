@@ -12,6 +12,7 @@ const NAV = [
   { to: '/interviewers', label: 'Interviewers', icon: '◈' },
   { to: '/interviews',   label: 'Interviews',   icon: '⌖' },
   { to: '/job-descriptions', label: 'Job Descriptions', icon: '🗎' },
+  { to: '/coding-problems', label: 'Coding Problems', icon: '⌨' },
   { to: '/admin/review-edit-requests', label: 'Edit requests', icon: '✎' },
 ];
 

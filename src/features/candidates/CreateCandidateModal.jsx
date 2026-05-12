@@ -38,7 +38,19 @@ export default function CreateCandidateModal({ open, onClose }) {
   const [busy, setBusy] = useState(false);
   const [resumeFile, setResumeFile] = useState(null);
   const [scanPhase, setScanPhase] = useState(null); // 'creating' | 'uploading' | 'scanning' | 'matching'
+  const [resumePreviewUrl, setResumePreviewUrl] = useState(null);
   const resumeInputRef = useRef(null);
+
+  // Generate (and clean up) an object URL for previewing the resume during scan.
+  useEffect(() => {
+    if (!resumeFile) {
+      setResumePreviewUrl(null);
+      return undefined;
+    }
+    const url = URL.createObjectURL(resumeFile);
+    setResumePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [resumeFile]);
 
   // Fetch the list of tech stacks that actually have questions in the bank
   // whenever the modal opens, so HR picks values that match what was loaded.
@@ -143,14 +155,18 @@ export default function CreateCandidateModal({ open, onClose }) {
     const candidate = action.payload.candidate;
 
     if (resumeFile) {
-      // Visual progress: cycle through phases so user feels something is happening.
+      // Phase progression: upload → scan (the long visible portion) → match (final).
       setScanPhase('uploading');
-      const advance = setTimeout(() => setScanPhase('scanning'), 800);
-      const advance2 = setTimeout(() => setScanPhase('matching'), 2200);
+      const toScan = setTimeout(() => setScanPhase('scanning'), 600);
 
-      const upload = await dispatch(uploadCandidateResume({ id: candidate.id, file: resumeFile }));
-      clearTimeout(advance);
-      clearTimeout(advance2);
+      const uploadPromise = dispatch(uploadCandidateResume({ id: candidate.id, file: resumeFile }));
+      const upload = await uploadPromise;
+
+      // The backend already finished — flash a brief 'matching' phase so the last step
+      // visibly lights up before the modal closes.
+      clearTimeout(toScan);
+      setScanPhase('matching');
+      await new Promise((r) => setTimeout(r, 500));
 
       if (uploadCandidateResume.fulfilled.match(upload)) {
         const scr = upload.payload.candidate?.screening;
@@ -184,22 +200,34 @@ export default function CreateCandidateModal({ open, onClose }) {
 
   const ScanView = () => {
     const meta = PHASE_LABELS[scanPhase] || PHASE_LABELS.creating;
+    const isPdf = resumeFile?.type === 'application/pdf';
     return (
       <div className="resume-scan">
         <div className="resume-scan__doc">
-          <div className="resume-scan__paper">
-            <div className="resume-scan__line resume-scan__line--title" />
-            <div className="resume-scan__line" />
-            <div className="resume-scan__line resume-scan__line--short" />
-            <div className="resume-scan__line" />
-            <div className="resume-scan__line resume-scan__line--medium" />
-            <div className="resume-scan__line" />
-            <div className="resume-scan__line resume-scan__line--short" />
-            <div className="resume-scan__line resume-scan__line--medium" />
-            <div className="resume-scan__line" />
-            <div className="resume-scan__line resume-scan__line--short" />
-          </div>
+          {isPdf && resumePreviewUrl ? (
+            <iframe
+              key={resumePreviewUrl}
+              src={`${resumePreviewUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+              title="Resume preview"
+              className="resume-scan__pdf"
+            />
+          ) : (
+            <div className="resume-scan__paper">
+              <div className="resume-scan__file-icon">📄</div>
+              <div className="resume-scan__filename">{resumeFile?.name || 'resume'}</div>
+              <div className="resume-scan__filesize">
+                {resumeFile ? `${(resumeFile.size / 1024).toFixed(0)} KB` : ''}
+              </div>
+              <div className="resume-scan__line resume-scan__line--title" />
+              <div className="resume-scan__line" />
+              <div className="resume-scan__line resume-scan__line--short" />
+              <div className="resume-scan__line resume-scan__line--medium" />
+              <div className="resume-scan__line" />
+              <div className="resume-scan__line resume-scan__line--short" />
+            </div>
+          )}
           <div className="resume-scan__beam" />
+          <div className="resume-scan__glow" />
         </div>
         <div className="resume-scan__status">
           <div className="resume-scan__title">{meta.title}</div>

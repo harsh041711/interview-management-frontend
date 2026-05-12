@@ -12,6 +12,7 @@ import myInterviewsReducer from '@/features/myInterviews/myInterviewsSlice';
 import reviewEditRequestsReducer from '@/features/reviewEditRequests/reviewEditRequestsSlice';
 import reviewsReducer from '@/features/reviews/reviewSlice';
 import jdsReducer from '@/features/jobDescriptions/jobDescriptionsSlice';
+import codingProblemsReducer from '@/features/codingProblems/codingProblemsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
     reviewEditRequests: reviewEditRequestsReducer,
     reviews: reviewsReducer,
     jds: jdsReducer,
+    codingProblems: codingProblemsReducer,
   },
   middleware: (getDefault) =>
     getDefault({

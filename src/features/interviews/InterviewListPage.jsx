@@ -43,12 +43,22 @@ export default function InterviewListPage() {
   const onExport = async () => {
     setExporting(true);
     try {
-      const params = { page: 1, limit: 10000 };
-      if (filters.status) params.status = filters.status;
-      if (filters.from) params.from = filters.from;
-      if (filters.to) params.to = filters.to;
-      const res = await interviewApi.list(params);
-      const rows = res.items || res.list || [];
+      const base = { limit: 100 };
+      if (filters.status) base.status = filters.status;
+      if (filters.from) base.from = filters.from;
+      if (filters.to) base.to = filters.to;
+      // Paginate through all pages (backend caps limit at 100).
+      const rows = [];
+      let page = 1;
+      let totalPages = 1;
+      do {
+        const res = await interviewApi.list({ ...base, page });
+        const batch = res.items || res.list || [];
+        rows.push(...batch);
+        totalPages = res.totalPages || res.meta?.totalPages || 1;
+        page += 1;
+        if (page > 200) break;
+      } while (page <= totalPages);
       if (rows.length === 0) {
         push({ type: 'warn', message: 'No interviews to export' });
         return;

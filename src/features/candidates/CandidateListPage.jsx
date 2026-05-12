@@ -164,12 +164,22 @@ export default function CandidateListPage() {
   const onExport = async () => {
     setExporting(true);
     try {
-      const params = { page: 1, limit: 10000 };
-      if (filters.status) params.status = filters.status;
-      if (filters.search.trim()) params.search = filters.search.trim();
-      if (filters.experience) params.experience = filters.experience;
-      const res = await candidateApi.list(params);
-      const rows = res.items || res.list || [];
+      const base = { limit: 100 };
+      if (filters.status) base.status = filters.status;
+      if (filters.search.trim()) base.search = filters.search.trim();
+      if (filters.experience) base.experience = filters.experience;
+      // Paginate through all pages (backend caps limit at 100).
+      const rows = [];
+      let page = 1;
+      let totalPages = 1;
+      do {
+        const res = await candidateApi.list({ ...base, page });
+        const batch = res.items || res.list || [];
+        rows.push(...batch);
+        totalPages = res.totalPages || res.meta?.totalPages || 1;
+        page += 1;
+        if (page > 200) break; // safety cap (20k rows)
+      } while (page <= totalPages);
       if (rows.length === 0) {
         push({ type: 'warn', message: 'No candidates to export' });
         return;

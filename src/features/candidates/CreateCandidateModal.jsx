@@ -37,6 +37,7 @@ export default function CreateCandidateModal({ open, onClose }) {
   const [stackInput, setStackInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [resumeFile, setResumeFile] = useState(null);
+  const [scanPhase, setScanPhase] = useState(null); // 'creating' | 'uploading' | 'scanning' | 'matching'
   const resumeInputRef = useRef(null);
 
   // Fetch the list of tech stacks that actually have questions in the bank
@@ -123,6 +124,8 @@ export default function CreateCandidateModal({ open, onClose }) {
       return;
     }
     setBusy(true);
+    setScanPhase(resumeFile ? 'creating' : null);
+
     const action = await dispatch(createCandidate({
       name: form.name,
       email: form.email,
@@ -133,13 +136,22 @@ export default function CreateCandidateModal({ open, onClose }) {
     }));
     if (!createCandidate.fulfilled.match(action)) {
       setBusy(false);
+      setScanPhase(null);
       push({ type: 'error', message: action.payload?.message || 'Failed to create candidate' });
       return;
     }
     const candidate = action.payload.candidate;
 
     if (resumeFile) {
+      // Visual progress: cycle through phases so user feels something is happening.
+      setScanPhase('uploading');
+      const advance = setTimeout(() => setScanPhase('scanning'), 800);
+      const advance2 = setTimeout(() => setScanPhase('matching'), 2200);
+
       const upload = await dispatch(uploadCandidateResume({ id: candidate.id, file: resumeFile }));
+      clearTimeout(advance);
+      clearTimeout(advance2);
+
       if (uploadCandidateResume.fulfilled.match(upload)) {
         const scr = upload.payload.candidate?.screening;
         const msg =
@@ -159,22 +171,79 @@ export default function CreateCandidateModal({ open, onClose }) {
     }
 
     setBusy(false);
+    setScanPhase(null);
     handleClose();
+  };
+
+  const PHASE_LABELS = {
+    creating: { title: 'Creating candidate record…', step: 1 },
+    uploading: { title: 'Uploading resume to secure storage…', step: 2 },
+    scanning: { title: 'Scanning resume content…', step: 3 },
+    matching: { title: 'Matching against job descriptions…', step: 4 },
+  };
+
+  const ScanView = () => {
+    const meta = PHASE_LABELS[scanPhase] || PHASE_LABELS.creating;
+    return (
+      <div className="resume-scan">
+        <div className="resume-scan__doc">
+          <div className="resume-scan__paper">
+            <div className="resume-scan__line resume-scan__line--title" />
+            <div className="resume-scan__line" />
+            <div className="resume-scan__line resume-scan__line--short" />
+            <div className="resume-scan__line" />
+            <div className="resume-scan__line resume-scan__line--medium" />
+            <div className="resume-scan__line" />
+            <div className="resume-scan__line resume-scan__line--short" />
+            <div className="resume-scan__line resume-scan__line--medium" />
+            <div className="resume-scan__line" />
+            <div className="resume-scan__line resume-scan__line--short" />
+          </div>
+          <div className="resume-scan__beam" />
+        </div>
+        <div className="resume-scan__status">
+          <div className="resume-scan__title">{meta.title}</div>
+          <div className="resume-scan__steps">
+            {[1, 2, 3, 4].map((n) => (
+              <div
+                key={n}
+                className={`resume-scan__step ${
+                  n < meta.step ? 'is-done' : n === meta.step ? 'is-current' : ''
+                }`}
+              >
+                <span className="resume-scan__step-dot">{n < meta.step ? '✓' : n}</span>
+                <span className="resume-scan__step-label">
+                  {n === 1 && 'Create'}
+                  {n === 2 && 'Upload'}
+                  {n === 3 && 'Scan'}
+                  {n === 4 && 'Match'}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="resume-scan__hint">
+            This usually takes 5–15 seconds. Hang tight.
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
     <Modal
       open={open}
-      onClose={handleClose}
-      title="New candidate"
+      onClose={scanPhase ? () => {} : handleClose}
+      title={scanPhase ? 'Processing resume' : 'New candidate'}
       footer={
-        <>
-          <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-          <Button onClick={submit} loading={busy}>Create candidate</Button>
-        </>
+        scanPhase ? null : (
+          <>
+            <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+            <Button onClick={submit} loading={busy}>Create candidate</Button>
+          </>
+        )
       }
     >
-      {(
+      {scanPhase ? <ScanView /> : (
         <form onSubmit={submit} className="create-candidate" noValidate>
           <Input
             label="Full name"

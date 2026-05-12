@@ -282,11 +282,13 @@ export default function CandidateListPage() {
                         {c.status === 'resume_approved' && (
                           <Button size="sm" onClick={() => onSendTest(c)} loading={actBusy.id === c.id && actBusy.action === 'sendTest'}>Send test</Button>
                         )}
-                        <Button size="sm" variant="secondary" onClick={() => onCopy(c.testUrl)}>Copy link</Button>
-                        {!['completed', 'cheated'].includes(c.status) && (
+                        {!['resume_pending', 'resume_approved', 'resume_declined'].includes(c.status) && (
+                          <Button size="sm" variant="secondary" onClick={() => onCopy(c.testUrl)}>Copy link</Button>
+                        )}
+                        {!['resume_pending', 'resume_approved', 'resume_declined', 'completed', 'cheated'].includes(c.status) && (
                           <Button size="sm" variant="secondary" onClick={() => onResend(c.id)}>Resend invite</Button>
                         )}
-                        {!['in_progress', 'completed', 'cheated'].includes(c.status) && (
+                        {!['resume_pending', 'resume_approved', 'resume_declined', 'in_progress', 'completed', 'cheated'].includes(c.status) && (
                           <Button size="sm" variant="ghost" onClick={() => onRegenerate(c.id)}>Regenerate</Button>
                         )}
                         {c.status === 'awaiting_decision' && (

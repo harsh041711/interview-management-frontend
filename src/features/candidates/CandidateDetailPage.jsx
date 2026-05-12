@@ -194,13 +194,13 @@ export default function CandidateDetailPage() {
         {c.status === 'resume_approved' && (
           <Button onClick={onSendTest} loading={actBusy === 'sendTest'}>Send test</Button>
         )}
-        {!['resume_pending', 'resume_declined', 'completed', 'cheated'].includes(c.status) && (
+        {!['resume_pending', 'resume_approved', 'resume_declined', 'completed', 'cheated'].includes(c.status) && (
           <Button variant="secondary" onClick={onResend} loading={actBusy === 'resend'}>Resend invite</Button>
         )}
-        {!['resume_pending', 'resume_declined', 'in_progress', 'completed', 'cheated'].includes(c.status) && (
+        {!['resume_pending', 'resume_approved', 'resume_declined', 'in_progress', 'completed', 'cheated'].includes(c.status) && (
           <Button variant="ghost" onClick={onRegenerate} loading={actBusy === 'regenerate'}>Regenerate token</Button>
         )}
-        {c.testUrl && c.status !== 'resume_pending' && c.status !== 'resume_declined' && (
+        {c.testUrl && !['resume_pending', 'resume_approved', 'resume_declined'].includes(c.status) && (
           <Button variant="secondary" onClick={onCopy}>Copy test link</Button>
         )}
         {c.status === 'awaiting_decision' && (
@@ -223,7 +223,7 @@ export default function CandidateDetailPage() {
         <ReviewPanel candidateId={c.id} />
       )}
 
-      {c.testUrl && !['resume_pending', 'resume_declined'].includes(c.status) && (
+      {c.testUrl && !['resume_pending', 'resume_approved', 'resume_declined'].includes(c.status) && (
         <div className="candidate-detail__token">
           <div>Test link</div>
           <code>{c.testUrl}</code>

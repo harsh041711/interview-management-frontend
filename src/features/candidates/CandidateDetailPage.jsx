@@ -18,7 +18,6 @@ import {
   rejectCandidate,
 } from './candidateSlice';
 import ScreeningPanel from './ScreeningPanel';
-import CodingTestPanel from './CodingTestPanel';
 import SendCodingTestModal from './SendCodingTestModal';
 import ReviewPanel from '@/features/reviews/ReviewPanel';
 import './CandidateDetailPage.scss';
@@ -227,7 +226,31 @@ export default function CandidateDetailPage() {
         rescreening={actBusy === 'rescreen'}
       />
 
-      <CodingTestPanel candidate={c} onRefresh={refresh} />
+      {c.codingTest?.sentAt && (
+        <div className="candidate-detail__coding-summary">
+          <div className="candidate-detail__coding-summary-head">
+            <div>
+              <div className="candidate-detail__coding-summary-title">Coding Test</div>
+              <div className="candidate-detail__coding-summary-meta">
+                Sent {formatDate(c.codingTest.sentAt)}
+                {c.codingTest.submittedAt
+                  ? ` · Submitted ${formatDate(c.codingTest.submittedAt)}`
+                  : ' · Awaiting candidate'}
+                {' · '}{c.codingTest.problemCount} problem(s) · {c.codingTest.durationMinutes} min
+              </div>
+            </div>
+            <span className={`candidate-detail__coding-summary-pill candidate-detail__coding-summary-pill--${c.codingTest.outcome || 'awaiting'}`}>
+              {c.codingTest.outcome === 'shortlisted' && 'Shortlisted'}
+              {c.codingTest.outcome === 'rejected' && 'Rejected'}
+              {c.codingTest.outcome === 'pending_review' && 'Pending review'}
+              {!c.codingTest.outcome && (c.codingTest.submittedAt ? 'Submitted' : 'Awaiting candidate')}
+            </span>
+          </div>
+          <Link to={`/candidates/${c.id}/coding-test`} className="candidate-detail__coding-summary-btn">
+            View coding test submission →
+          </Link>
+        </div>
+      )}
 
       {['awaiting_decision', 'selected_for_culture', 'final_rejected'].includes(c.status) && (
         <ReviewPanel candidateId={c.id} />

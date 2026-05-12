@@ -141,7 +141,13 @@ export default function CreateCandidateModal({ open, onClose }) {
     if (resumeFile) {
       const upload = await dispatch(uploadCandidateResume({ id: candidate.id, file: resumeFile }));
       if (uploadCandidateResume.fulfilled.match(upload)) {
-        push({ type: 'success', message: 'Candidate created — resume uploaded, screening in progress' });
+        const scr = upload.payload.candidate?.screening;
+        const msg =
+          scr?.status === 'scored' ? `Candidate created — screening complete (match: ${scr.matchPercent}%)`
+          : scr?.status === 'skipped' ? 'Candidate created — no matching JD, screening skipped'
+          : scr?.status === 'failed' ? 'Candidate created — AI screening unavailable, review manually'
+          : 'Candidate created — resume uploaded';
+        push({ type: 'success', message: msg });
       } else {
         push({
           type: 'warn',

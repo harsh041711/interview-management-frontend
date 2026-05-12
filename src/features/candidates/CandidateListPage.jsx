@@ -15,10 +15,13 @@ import {
   rejectCandidate,
 } from './candidateSlice';
 import ReviewPanel from '@/features/reviews/ReviewPanel';
+import ScreeningPanel from './ScreeningPanel';
+import Modal from '@/components/common/Modal';
+import { candidateApi } from '@/api/candidateApi';
 import CreateCandidateModal from './CreateCandidateModal';
 import './CandidateListPage.scss';
 
-const STATUSES = ['', 'pending', 'photo_captured', 'in_progress', 'completed', 'shortlisted', 'rejected', 'expired', 'cheated'];
+const STATUSES = ['', 'resume_pending', 'resume_approved', 'resume_declined', 'pending', 'photo_captured', 'in_progress', 'completed', 'shortlisted', 'rejected', 'expired', 'cheated', 'awaiting_decision', 'selected_for_culture', 'final_rejected'];
 
 export default function CandidateListPage() {
   const dispatch = useDispatch();
@@ -27,6 +30,8 @@ export default function CandidateListPage() {
   const [filters, setFilters] = useState({ status: '', search: '', experience: '', page: 1 });
   const [createOpen, setCreateOpen] = useState(false);
   const [expanded, setExpanded] = useState(new Set());
+  const [actBusy, setActBusy] = useState({ id: null, action: null }); // { id, action: 'approve' | 'decline' | 'rescreen' | 'sendTest' }
+  const [confirmOverride, setConfirmOverride] = useState(null); // { id, action: 'approve' | 'decline', candidate }
 
   useEffect(() => {
     const params = { page: filters.page, limit: meta.limit };
@@ -91,6 +96,78 @@ export default function CandidateListPage() {
     }
   };
 
+  const refreshList = () => {
+    const params = { page: filters.page, limit: meta.limit };
+    if (filters.status) params.status = filters.status;
+    if (filters.search.trim()) params.search = filters.search.trim();
+    if (filters.experience) params.experience = filters.experience;
+    dispatch(fetchCandidates(params));
+  };
+
+  const onApprove = async (c, { skipConfirm } = {}) => {
+    const scored = c.screening?.status === 'scored';
+    if (!skipConfirm && scored && c.screening.matchPercent < 60) {
+      setConfirmOverride({ id: c.id, action: 'approve', candidate: c });
+      return;
+    }
+    setConfirmOverride(null);
+    setActBusy({ id: c.id, action: 'approve' });
+    try {
+      await candidateApi.approveResume(c.id);
+      push({ type: 'success', message: 'Approved — shortlist email queued' });
+      refreshList();
+    } catch (err) {
+      push({ type: 'error', message: err.response?.data?.message || 'Approve failed' });
+    } finally {
+      setActBusy({ id: null, action: null });
+    }
+  };
+
+  const onDeclineResume = async (c, { skipConfirm } = {}) => {
+    const scored = c.screening?.status === 'scored';
+    if (!skipConfirm && scored && c.screening.matchPercent >= 60) {
+      setConfirmOverride({ id: c.id, action: 'decline', candidate: c });
+      return;
+    }
+    setConfirmOverride(null);
+    setActBusy({ id: c.id, action: 'decline' });
+    try {
+      await candidateApi.declineResume(c.id);
+      push({ type: 'success', message: 'Declined — rejection email queued' });
+      refreshList();
+    } catch (err) {
+      push({ type: 'error', message: err.response?.data?.message || 'Decline failed' });
+    } finally {
+      setActBusy({ id: null, action: null });
+    }
+  };
+
+  const onRescreen = async (c) => {
+    setActBusy({ id: c.id, action: 'rescreen' });
+    try {
+      await candidateApi.rescreen(c.id);
+      push({ type: 'success', message: 'Re-screened' });
+      refreshList();
+    } catch (err) {
+      push({ type: 'error', message: err.response?.data?.message || 'Re-screen failed' });
+    } finally {
+      setActBusy({ id: null, action: null });
+    }
+  };
+
+  const onSendTest = async (c) => {
+    setActBusy({ id: c.id, action: 'sendTest' });
+    try {
+      await candidateApi.sendTest(c.id);
+      push({ type: 'success', message: 'Test invitation sent' });
+      refreshList();
+    } catch (err) {
+      push({ type: 'error', message: err.response?.data?.message || 'Send test failed' });
+    } finally {
+      setActBusy({ id: null, action: null });
+    }
+  };
+
   return (
     <div className="candidates-page">
       <header className="candidates-page__head">
@@ -146,6 +223,7 @@ export default function CandidateListPage() {
                 <th>Candidate</th>
                 <th>Tech stack</th>
                 <th>Status</th>
+                <th>Match</th>
                 <th>Token</th>
                 <th>Created</th>
                 <th />
@@ -185,6 +263,13 @@ export default function CandidateListPage() {
                     </td>
                     <td><StatusBadge status={c.status} /></td>
                     <td>
+                      {c.screening?.status === 'scored'
+                        ? <span style={{ fontWeight: 600, color: c.screening.matchPercent >= 60 ? '#047857' : '#b91c1c' }}>
+                            {c.screening.matchPercent}%
+                          </span>
+                        : '—'}
+                    </td>
+                    <td>
                       <div className="candidates-table__token">
                         <span className={c.tokenExpiresAt && new Date(c.tokenExpiresAt) < new Date() ? 'is-expired' : ''}>
                           {c.tokenExpiresAt ? `Expires ${relativeFromNow(c.tokenExpiresAt)}` : '—'}
@@ -194,6 +279,15 @@ export default function CandidateListPage() {
                     <td>{formatDate(c.createdAt)}</td>
                     <td>
                       <div className="candidates-table__actions">
+                        {c.status === 'resume_pending' && (
+                          <>
+                            <Button size="sm" onClick={() => onApprove(c)} loading={actBusy.id === c.id && actBusy.action === 'approve'}>Approve</Button>
+                            <Button size="sm" variant="secondary" onClick={() => onDeclineResume(c)} loading={actBusy.id === c.id && actBusy.action === 'decline'}>Decline</Button>
+                          </>
+                        )}
+                        {c.status === 'resume_approved' && (
+                          <Button size="sm" onClick={() => onSendTest(c)} loading={actBusy.id === c.id && actBusy.action === 'sendTest'}>Send test</Button>
+                        )}
                         <Button size="sm" variant="secondary" onClick={() => onCopy(c.testUrl)}>Copy link</Button>
                         {!['completed', 'cheated'].includes(c.status) && (
                           <Button size="sm" variant="secondary" onClick={() => onResend(c.id)}>Resend invite</Button>
@@ -207,9 +301,9 @@ export default function CandidateListPage() {
                             <Button size="sm" variant="ghost" onClick={() => onReject(c.id)}>Reject</Button>
                           </>
                         )}
-                        {['awaiting_decision', 'selected_for_culture', 'final_rejected'].includes(c.status) && (
+                        {(['awaiting_decision', 'selected_for_culture', 'final_rejected'].includes(c.status) || c.screening) && (
                           <Button size="sm" variant="ghost" onClick={() => toggleExpanded(c.id)}>
-                            {expanded.has(c.id) ? 'Hide review' : 'View review'}
+                            {expanded.has(c.id) ? 'Hide details' : 'View details'}
                           </Button>
                         )}
                         <Button size="sm" variant="ghost" onClick={() => onDelete(c.id)}>Delete</Button>
@@ -218,7 +312,19 @@ export default function CandidateListPage() {
                   </tr>
                   {expanded.has(c.id) && (
                     <tr className="candidates-table__expanded">
-                      <td colSpan={6}><ReviewPanel candidateId={c.id} /></td>
+                      <td colSpan={7}>
+                        {c.screening && (
+                          <ScreeningPanel
+                            screening={c.screening}
+                            candidate={c}
+                            onRescreen={() => onRescreen(c)}
+                            rescreening={actBusy.id === c.id && actBusy.action === 'rescreen'}
+                          />
+                        )}
+                        {['awaiting_decision', 'selected_for_culture', 'final_rejected'].includes(c.status) && (
+                          <ReviewPanel candidateId={c.id} />
+                        )}
+                      </td>
                     </tr>
                   )}
                 </Fragment>
@@ -228,6 +334,33 @@ export default function CandidateListPage() {
         </div>
       )}
 
+      <Modal
+        open={confirmOverride !== null}
+        onClose={() => setConfirmOverride(null)}
+        title="Override AI recommendation?"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmOverride(null)}>Cancel</Button>
+            <Button onClick={() => {
+              if (!confirmOverride) return;
+              if (confirmOverride.action === 'approve') {
+                onApprove(confirmOverride.candidate, { skipConfirm: true });
+              } else {
+                onDeclineResume(confirmOverride.candidate, { skipConfirm: true });
+              }
+            }}>
+              Confirm {confirmOverride?.action === 'approve' ? 'Approve' : 'Decline'}
+            </Button>
+          </>
+        }
+      >
+        {confirmOverride?.action === 'approve' && (
+          <p>AI recommends declining this candidate (match: {confirmOverride.candidate.screening?.matchPercent}%). Approve anyway?</p>
+        )}
+        {confirmOverride?.action === 'decline' && (
+          <p>AI recommends approving this candidate (match: {confirmOverride.candidate.screening?.matchPercent}%). Decline anyway?</p>
+        )}
+      </Modal>
       <CreateCandidateModal open={createOpen} onClose={() => setCreateOpen(false)} />
     </div>
   );

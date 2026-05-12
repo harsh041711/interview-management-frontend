@@ -1,0 +1,42 @@
+.ct-panel {
+  background: white; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 16px 20px; margin-bottom: 16px;
+
+  &__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  &__title { font-weight: 600; font-size: 14px; color: #374151; }
+  &__meta { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+  &__tabsw {
+    display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    &--green { background: #ecfdf5; color: #047857; }
+    &--amber { background: #fef3c7; color: #92400e; }
+    &--red { background: #fef2f2; color: #b91c1c; }
+  }
+
+  &__sub {
+    background: #f9fafb; border-radius: 8px; padding: 14px 16px; margin-top: 12px;
+    h4 { margin: 0 0 4px; font-size: 14px; }
+    &-meta { font-size: 12px; color: #6b7280; margin-bottom: 10px; }
+  }
+
+  &__cases {
+    background: white; border: 1px solid #e5e7eb; border-radius: 6px;
+    margin: 10px 0; font-family: monospace; font-size: 12px;
+  }
+  &__case {
+    display: grid; grid-template-columns: 30px 1fr 1fr 1fr; gap: 8px;
+    padding: 6px 10px; border-bottom: 1px solid #e5e7eb;
+    &:last-child { border-bottom: 0; }
+    &--passed { background: #f0fdf4; }
+    &--failed { background: #fef2f2; }
+  }
+
+  &__code { border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; height: 280px; margin-top: 8px; }
+
+  &__rate { display: flex; gap: 12px; align-items: center; margin-top: 12px; }
+  &__stars { display: flex; gap: 2px; cursor: pointer; }
+  &__star { font-size: 22px; color: #d1d5db; user-select: none; &.is-on { color: #f59e0b; } }
+  &__comment { flex: 1; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-family: inherit; }
+
+  &__actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb; }
+}

@@ -172,20 +172,22 @@ export default function CodingTestPage() {
 
       <div className="coding-test__body">
         <div className="coding-test__left">
-          <div className="coding-test__problem-head">
-            <div className="coding-test__problem-row">
-              <h2 className="coding-test__problem-title">{problem.title}</h2>
-              <span className={`coding-test__difficulty coding-test__difficulty--${problem.difficulty}`}>
-                {problem.difficulty}
-              </span>
+          <div className="coding-test__card">
+            <div className="coding-test__problem-head">
+              <div className="coding-test__problem-row">
+                <h2 className="coding-test__problem-title">{problem.title}</h2>
+                <span className={`coding-test__difficulty coding-test__difficulty--${problem.difficulty}`}>
+                  {problem.difficulty}
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="coding-test__problem-desc">
-            <ReactMarkdown>{problem.description || ''}</ReactMarkdown>
+            <div className="coding-test__problem-desc">
+              <ReactMarkdown>{problem.description || ''}</ReactMarkdown>
+            </div>
           </div>
 
           {problem.sampleCases?.length > 0 && (
-            <>
+            <div className="coding-test__card">
               <div className="coding-test__samples-title">
                 <span>Examples</span>
                 <span className="coding-test__samples-count">{problem.sampleCases.length}</span>
@@ -203,7 +205,7 @@ export default function CodingTestPage() {
                   </div>
                 </div>
               ))}
-            </>
+            </div>
           )}
         </div>
 

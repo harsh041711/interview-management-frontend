@@ -17,6 +17,8 @@ const tabSwitchClass = (n) => {
   return 'ct-panel__tabsw--red';
 };
 
+const difficultyClass = (d) => `ct-panel__difficulty ct-panel__difficulty--${d || 'medium'}`;
+
 export default function CodingTestPanel({ candidate, onRefresh }) {
   const { push } = useToast();
   const [submissions, setSubmissions] = useState(null);
@@ -112,81 +114,186 @@ export default function CodingTestPanel({ candidate, onRefresh }) {
     } finally { setBusy(null); }
   };
 
+  const totalPassed = submissions.reduce((a, s) => a + (s.passedCount || 0), 0);
+  const totalCases = submissions.reduce((a, s) => a + (s.totalCount || 0), 0);
+  const passPct = totalCases > 0 ? Math.round((totalPassed / totalCases) * 100) : 0;
+  const outcomeLabel = ct.outcome === 'shortlisted'
+    ? 'Shortlisted'
+    : ct.outcome === 'rejected'
+      ? 'Rejected'
+      : 'Pending review';
+
   return (
     <div className="ct-panel">
-      <div className="ct-panel__head">
-        <div>
-          <div className="ct-panel__title">Coding Test</div>
-          <div className="ct-panel__meta">
-            Sent {formatDate(ct.sentAt)} · Submitted {formatDate(ct.submittedAt)} · {submissions.length} submission(s)
-            {' · '}
-            <span className={`ct-panel__tabsw ${tabSwitchClass(submissions[0]?.tabSwitches || 0)}`}>
-              Tab-switches: {submissions[0]?.tabSwitches || 0}
-            </span>
+      <div className="ct-panel__summary">
+        <div className="ct-panel__summary-row">
+          <div>
+            <div className="ct-panel__title">Coding Test Submission</div>
+            <div className="ct-panel__meta">
+              Sent {formatDate(ct.sentAt)} · Submitted {formatDate(ct.submittedAt)} · {submissions.length} problem(s)
+            </div>
+          </div>
+          <span className={`ct-panel__outcome ct-panel__outcome--${ct.outcome || 'pending_review'}`}>
+            {outcomeLabel}
+          </span>
+        </div>
+        <div className="ct-panel__stats">
+          <div className="ct-panel__stat">
+            <div className="ct-panel__stat-label">Test cases</div>
+            <div className="ct-panel__stat-value">
+              <span className={passPct >= 80 ? 'is-good' : passPct >= 50 ? 'is-ok' : 'is-bad'}>
+                {totalPassed}/{totalCases}
+              </span>
+              <span className="ct-panel__stat-sub">{passPct}% passed</span>
+            </div>
+          </div>
+          <div className="ct-panel__stat">
+            <div className="ct-panel__stat-label">Tab switches</div>
+            <div className="ct-panel__stat-value">
+              <span className={`ct-panel__tabsw ${tabSwitchClass(submissions[0]?.tabSwitches || 0)}`}>
+                {submissions[0]?.tabSwitches || 0}
+              </span>
+            </div>
+          </div>
+          <div className="ct-panel__stat">
+            <div className="ct-panel__stat-label">Languages</div>
+            <div className="ct-panel__stat-value">
+              {[...new Set(submissions.map((s) => LANG_LABEL[s.language]))].join(', ') || '—'}
+            </div>
           </div>
         </div>
-        {ct.outcome && (
-          <div style={{ fontSize: 13, fontWeight: 600, color: ct.outcome === 'shortlisted' ? '#047857' : '#b91c1c' }}>
-            {ct.outcome === 'shortlisted' ? 'Shortlisted' : ct.outcome === 'rejected' ? 'Rejected' : 'Pending review'}
-          </div>
-        )}
       </div>
 
-      {submissions.map((sub) => (
+      {submissions.map((sub, idx) => (
         <div key={sub.id} className="ct-panel__sub">
-          <h4>{sub.problem?.title || 'Problem'}</h4>
-          <div className="ct-panel__sub-meta">
-            Language: {LANG_LABEL[sub.language]} · Passed {sub.passedCount}/{sub.totalCount}
+          <div className="ct-panel__sub-head">
+            <div>
+              <div className="ct-panel__sub-num">Problem {idx + 1} of {submissions.length}</div>
+              <h3 className="ct-panel__sub-title">{sub.problem?.title || 'Problem'}</h3>
+              <div className="ct-panel__sub-tags">
+                {sub.problem?.difficulty && (
+                  <span className={difficultyClass(sub.problem.difficulty)}>
+                    {sub.problem.difficulty}
+                  </span>
+                )}
+                <span className="ct-panel__lang-tag">{LANG_LABEL[sub.language]}</span>
+                <span className={`ct-panel__pass-pill ${sub.passedCount === sub.totalCount ? 'is-pass' : sub.passedCount > 0 ? 'is-partial' : 'is-fail'}`}>
+                  {sub.passedCount}/{sub.totalCount} passed
+                </span>
+              </div>
+            </div>
+            {sub.rating && (
+              <div className="ct-panel__sub-rating">
+                <span className="ct-panel__rating-stars">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <span key={n} className={n <= sub.rating ? 'is-on' : ''}>★</span>
+                  ))}
+                </span>
+                <span className="ct-panel__rating-label">Rated</span>
+              </div>
+            )}
           </div>
 
+          <div className="ct-panel__cases-title">Test cases</div>
           <div className="ct-panel__cases">
             {sub.runs.map((r, i) => (
-              <div key={i} className={`ct-panel__case ${r.passed ? 'ct-panel__case--passed' : 'ct-panel__case--failed'}`}>
-                <div>{r.passed ? '✓' : '✗'}</div>
-                <div>stdin: {JSON.stringify(r.stdin)}</div>
-                <div>expected: {JSON.stringify(r.expectedStdout)}</div>
-                <div>got: {JSON.stringify(r.actualStdout)} {r.error ? ` [${r.error}]` : ''}</div>
+              <div key={i} className={`ct-panel__case ${r.passed ? 'is-passed' : 'is-failed'}`}>
+                <div className="ct-panel__case-num">
+                  <span className={`ct-panel__case-icon ${r.passed ? 'is-passed' : 'is-failed'}`}>
+                    {r.passed ? '✓' : '✗'}
+                  </span>
+                  <span>Case {i + 1}</span>
+                </div>
+                <div className="ct-panel__case-body">
+                  <div className="ct-panel__case-row">
+                    <span className="ct-panel__case-label">Input</span>
+                    <pre className="ct-panel__case-value">{r.stdin || '(empty)'}</pre>
+                  </div>
+                  <div className="ct-panel__case-row">
+                    <span className="ct-panel__case-label">Expected</span>
+                    <pre className="ct-panel__case-value">{r.expectedStdout || '(empty)'}</pre>
+                  </div>
+                  <div className="ct-panel__case-row">
+                    <span className="ct-panel__case-label">Got</span>
+                    <pre className={`ct-panel__case-value ${r.passed ? '' : 'is-bad'}`}>
+                      {r.actualStdout || '(empty)'}
+                      {r.error ? ` ⚠ ${r.error}` : ''}
+                    </pre>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
 
+          <div className="ct-panel__cases-title">Candidate code</div>
           <div className="ct-panel__code">
+            <div className="ct-panel__code-bar">
+              <span className="ct-panel__code-lang">{LANG_LABEL[sub.language]}</span>
+              <span className="ct-panel__code-readonly">Read-only</span>
+            </div>
             <Editor
-              height="280px"
+              height="320px"
+              theme="vs-dark"
               language={MONACO_LANG[sub.language]}
               value={sub.code}
-              options={{ readOnly: true, minimap: { enabled: false }, fontSize: 13, automaticLayout: true }}
+              options={{
+                readOnly: true,
+                minimap: { enabled: false },
+                fontSize: 13,
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+                padding: { top: 12 },
+              }}
             />
           </div>
 
-          <div className="ct-panel__rate">
-            <div className="ct-panel__stars">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <span
-                  key={n}
-                  className={`ct-panel__star ${n <= (drafts[sub.id]?.rating || 0) ? 'is-on' : ''}`}
-                  onClick={() => setDrafts((d) => ({ ...d, [sub.id]: { ...d[sub.id], rating: n } }))}
-                >★</span>
-              ))}
+          <div className="ct-panel__rate-box">
+            <div className="ct-panel__rate-title">Rate this submission</div>
+            <div className="ct-panel__rate">
+              <div className="ct-panel__stars">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <span
+                    key={n}
+                    className={`ct-panel__star ${n <= (drafts[sub.id]?.rating || 0) ? 'is-on' : ''}`}
+                    onClick={() => setDrafts((d) => ({ ...d, [sub.id]: { ...d[sub.id], rating: n } }))}
+                    title={`${n} star${n > 1 ? 's' : ''}`}
+                  >★</span>
+                ))}
+              </div>
+              <textarea
+                rows={2}
+                className="ct-panel__comment"
+                placeholder="Comment (optional) — what stood out about this submission?"
+                value={drafts[sub.id]?.comment || ''}
+                onChange={(e) => setDrafts((d) => ({ ...d, [sub.id]: { ...d[sub.id], comment: e.target.value } }))}
+              />
+              <div className="ct-panel__rate-buttons">
+                <Button size="sm" variant="secondary" onClick={() => onRerun(sub)} loading={busy === `rerun-${sub.id}`}>↻ Re-run tests</Button>
+                <Button size="sm" onClick={() => onRate(sub)} loading={busy === `rate-${sub.id}`}>Save rating</Button>
+              </div>
             </div>
-            <textarea
-              rows={1}
-              className="ct-panel__comment"
-              placeholder="Comment (optional)"
-              value={drafts[sub.id]?.comment || ''}
-              onChange={(e) => setDrafts((d) => ({ ...d, [sub.id]: { ...d[sub.id], comment: e.target.value } }))}
-            />
-            <Button size="sm" variant="secondary" onClick={() => onRerun(sub)} loading={busy === `rerun-${sub.id}`}>Re-run</Button>
-            <Button size="sm" onClick={() => onRate(sub)} loading={busy === `rate-${sub.id}`}>Save rating</Button>
           </div>
         </div>
       ))}
 
-      {!ct.outcome && ct.outcome !== 'shortlisted' && ct.outcome !== 'rejected' && (
-        <div className="ct-panel__actions">
-          <Button onClick={onShortlist} loading={busy === 'shortlist'} disabled={!allRated}>Shortlist candidate</Button>
-          <Button variant="secondary" onClick={onReject} loading={busy === 'reject'} disabled={!allRated}>Reject candidate</Button>
-          {!allRated && <span style={{ fontSize: 13, color: '#6b7280', alignSelf: 'center' }}>Rate all problems first</span>}
+      {(!ct.outcome || ct.outcome === 'pending_review') && (
+        <div className="ct-panel__decision">
+          <div className="ct-panel__decision-head">
+            <div className="ct-panel__decision-title">Final decision</div>
+            <div className="ct-panel__decision-sub">
+              {allRated
+                ? 'All submissions rated. Make the call:'
+                : `Rate all ${submissions.length} submission${submissions.length > 1 ? 's' : ''} before deciding.`}
+            </div>
+          </div>
+          <div className="ct-panel__actions">
+            <Button onClick={onShortlist} loading={busy === 'shortlist'} disabled={!allRated}>
+              ✓ Shortlist candidate
+            </Button>
+            <Button variant="secondary" onClick={onReject} loading={busy === 'reject'} disabled={!allRated}>
+              ✗ Reject candidate
+            </Button>
+          </div>
         </div>
       )}
     </div>

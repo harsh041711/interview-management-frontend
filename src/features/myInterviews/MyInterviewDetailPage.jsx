@@ -37,6 +37,7 @@ export default function MyInterviewDetailPage() {
   const { interview, review, pendingEditRequest, canEdit } = detail;
   const candidate = interview.candidate || {};
   const isCompleted = interview.status === 'completed';
+  const canSubmitReview = !review && (interview.status === 'scheduled' || interview.status === 'completed');
 
   const onSubmit = async (payload) => {
     const action = await dispatch(submitMyReview({ id, ...payload }));
@@ -95,12 +96,29 @@ export default function MyInterviewDetailPage() {
 
       <section className="my-interview__review-block">
         <h2>Review</h2>
-        {!isCompleted && !review && (
-          <p className="my-interview__hint">The review form unlocks once the interview is marked completed.</p>
+        {!canSubmitReview && !review && (
+          <p className="my-interview__hint">
+            {interview.status === 'cancelled'
+              ? 'This interview was cancelled — no review needed.'
+              : interview.status === 'reschedule_requested'
+              ? 'A reschedule is pending HR review. The form will unlock once it is resolved.'
+              : 'The review form unlocks once the interview is scheduled.'}
+          </p>
         )}
 
-        {isCompleted && !review && (
-          <ReviewForm onSubmit={onSubmit} busy={busy} submitLabel="Submit review" />
+        {canSubmitReview && (
+          <>
+            {!isCompleted && (
+              <p className="my-interview__hint">
+                Submitting your review will mark this interview as completed.
+              </p>
+            )}
+            <ReviewForm
+              onSubmit={onSubmit}
+              busy={busy}
+              submitLabel={isCompleted ? 'Submit review' : 'Submit review & mark complete'}
+            />
+          </>
         )}
 
         {review && !editing && (

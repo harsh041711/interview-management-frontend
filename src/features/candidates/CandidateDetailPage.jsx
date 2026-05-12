@@ -212,7 +212,7 @@ export default function CandidateDetailPage() {
             <Button variant="ghost" onClick={onReject} loading={actBusy === 'reject'}>Reject</Button>
           </>
         )}
-        {['resume_approved', 'pending', 'completed', 'shortlisted'].includes(c.status) && (
+        {['resume_approved', 'pending', 'in_progress', 'completed', 'awaiting_decision', 'shortlisted', 'selected_for_culture'].includes(c.status) && (
           <Button variant="secondary" onClick={() => setCodingTestOpen(true)}>
             {c.codingTest?.sentAt ? 'Re-send coding test' : 'Send coding test'}
           </Button>

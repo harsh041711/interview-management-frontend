@@ -18,4 +18,8 @@ export const candidateApi = {
       .then((r) => r.data.data);
   },
   removeResume: (id) => apiClient.delete(`/candidates/${id}/resume`).then((r) => r.data.data),
+  approveResume: (id) => apiClient.post(`/candidates/${id}/resume/approve`).then((r) => r.data.data),
+  declineResume: (id) => apiClient.post(`/candidates/${id}/resume/decline`).then((r) => r.data.data),
+  rescreen: (id) => apiClient.post(`/candidates/${id}/resume/rescreen`).then((r) => r.data.data),
+  sendTest: (id) => apiClient.post(`/candidates/${id}/send-test`).then((r) => r.data.data),
 };

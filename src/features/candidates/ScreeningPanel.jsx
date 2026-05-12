@@ -2,7 +2,7 @@ import Button from '@/components/common/Button';
 import './ScreeningPanel.scss';
 
 export default function ScreeningPanel({ screening, candidate, onRescreen, rescreening }) {
-  if (!screening) return null;
+  if (!screening?.status) return null;
 
   const recommend = screening.status === 'scored'
     ? (screening.matchPercent >= 60 ? 'approve' : 'decline')

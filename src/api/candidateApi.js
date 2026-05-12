@@ -22,4 +22,9 @@ export const candidateApi = {
   declineResume: (id) => apiClient.post(`/candidates/${id}/resume/decline`).then((r) => r.data.data),
   rescreen: (id) => apiClient.post(`/candidates/${id}/resume/rescreen`).then((r) => r.data.data),
   sendTest: (id) => apiClient.post(`/candidates/${id}/send-test`).then((r) => r.data.data),
+  sendCodingTest: (id, payload) => apiClient.post(`/candidates/${id}/coding-test/send`, payload).then((r) => r.data.data),
+  regenerateCodingTest: (id) => apiClient.post(`/candidates/${id}/coding-test/regenerate`).then((r) => r.data.data),
+  resendCodingTest: (id) => apiClient.post(`/candidates/${id}/coding-test/resend`).then((r) => r.data.data),
+  codingShortlist: (id) => apiClient.post(`/candidates/${id}/coding-test/shortlist`).then((r) => r.data.data),
+  codingReject: (id) => apiClient.post(`/candidates/${id}/coding-test/reject`).then((r) => r.data.data),
 };

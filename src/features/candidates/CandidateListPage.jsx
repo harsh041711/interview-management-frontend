@@ -1,5 +1,6 @@
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import Button from '@/components/common/Button';
 import StatusBadge from '@/components/common/StatusBadge';
 import EmptyState from '@/components/common/EmptyState';
@@ -14,8 +15,6 @@ import {
   selectCandidate,
   rejectCandidate,
 } from './candidateSlice';
-import ReviewPanel from '@/features/reviews/ReviewPanel';
-import ScreeningPanel from './ScreeningPanel';
 import Modal from '@/components/common/Modal';
 import { candidateApi } from '@/api/candidateApi';
 import CreateCandidateModal from './CreateCandidateModal';
@@ -25,11 +24,11 @@ const STATUSES = ['', 'resume_pending', 'resume_approved', 'resume_declined', 'p
 
 export default function CandidateListPage() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { push } = useToast();
   const { list, status, meta, error } = useSelector((s) => s.candidates);
   const [filters, setFilters] = useState({ status: '', search: '', experience: '', page: 1 });
   const [createOpen, setCreateOpen] = useState(false);
-  const [expanded, setExpanded] = useState(new Set());
   const [actBusy, setActBusy] = useState({ id: null, action: null }); // { id, action: 'approve' | 'decline' | 'rescreen' | 'sendTest' }
   const [confirmOverride, setConfirmOverride] = useState(null); // { id, action: 'approve' | 'decline', candidate }
 
@@ -62,14 +61,6 @@ export default function CandidateListPage() {
     } else {
       push({ type: 'error', message: action.payload?.message || 'Could not send invite' });
     }
-  };
-
-  const toggleExpanded = (id) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
   };
 
   const onSelect = async (id) => {
@@ -231,10 +222,13 @@ export default function CandidateListPage() {
             </thead>
             <tbody>
               {list.map((c) => (
-                <Fragment key={c.id}>
-                  <tr>
+                <tr key={c.id}>
                     <td>
-                      <div className="candidates-table__primary">
+                      <div
+                        className="candidates-table__primary"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => navigate(`/candidates/${c.id}`)}
+                      >
                         {c.photoUrl ? <img src={c.photoUrl} alt="" /> : <span className="candidates-table__avatar">{c.name?.[0]}</span>}
                         <div>
                           <div className="candidates-table__name">{c.name}</div>
@@ -301,33 +295,13 @@ export default function CandidateListPage() {
                             <Button size="sm" variant="ghost" onClick={() => onReject(c.id)}>Reject</Button>
                           </>
                         )}
-                        {(['awaiting_decision', 'selected_for_culture', 'final_rejected'].includes(c.status) || c.screening) && (
-                          <Button size="sm" variant="ghost" onClick={() => toggleExpanded(c.id)}>
-                            {expanded.has(c.id) ? 'Hide details' : 'View details'}
-                          </Button>
-                        )}
+                        <Button size="sm" variant="ghost" onClick={() => navigate(`/candidates/${c.id}`)}>
+                          View details
+                        </Button>
                         <Button size="sm" variant="ghost" onClick={() => onDelete(c.id)}>Delete</Button>
                       </div>
                     </td>
                   </tr>
-                  {expanded.has(c.id) && (
-                    <tr className="candidates-table__expanded">
-                      <td colSpan={7}>
-                        {c.screening && (
-                          <ScreeningPanel
-                            screening={c.screening}
-                            candidate={c}
-                            onRescreen={() => onRescreen(c)}
-                            rescreening={actBusy.id === c.id && actBusy.action === 'rescreen'}
-                          />
-                        )}
-                        {['awaiting_decision', 'selected_for_culture', 'final_rejected'].includes(c.status) && (
-                          <ReviewPanel candidateId={c.id} />
-                        )}
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
               ))}
             </tbody>
           </table>

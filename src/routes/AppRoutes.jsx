@@ -9,6 +9,7 @@ import ForgotPasswordPage from '@/features/forgotPassword/ForgotPasswordPage';
 import SetupPasswordPage from '@/features/accountSetup/SetupPasswordPage';
 import DashboardPage from '@/features/dashboard/DashboardPage';
 import CandidateListPage from '@/features/candidates/CandidateListPage';
+import CandidateDetailPage from '@/features/candidates/CandidateDetailPage';
 import QuestionListPage from '@/features/questions/QuestionListPage';
 import SubmissionListPage from '@/features/submissions/SubmissionListPage';
 import SubmissionDetailPage from '@/features/submissions/SubmissionDetailPage';
@@ -51,6 +52,7 @@ export default function AppRoutes() {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/candidates" element={<CandidateListPage />} />
+        <Route path="/candidates/:id" element={<CandidateDetailPage />} />
         <Route path="/questions" element={<QuestionListPage />} />
         <Route path="/submissions" element={<SubmissionListPage />} />
         <Route path="/submissions/:id" element={<SubmissionDetailPage />} />

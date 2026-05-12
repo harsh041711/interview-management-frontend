@@ -8,6 +8,8 @@ const initialState = {
   filters: { search: '', status: '', techStack: '' },
   selected: null,
   selectedSubmission: null,
+  current: null,
+  currentStatus: 'idle',
   stats: {},
   status: 'idle',
   error: null,
@@ -132,9 +134,16 @@ const candidateSlice = createSlice({
         state.error = action.payload?.message || 'Failed to load candidates';
       })
       .addCase(fetchCandidateStats.fulfilled, (state, action) => { state.stats = action.payload || {}; })
+      .addCase(fetchCandidate.pending, (state) => { state.currentStatus = 'loading'; state.error = null; })
       .addCase(fetchCandidate.fulfilled, (state, action) => {
+        state.currentStatus = 'succeeded';
+        state.current = action.payload.candidate;
         state.selected = action.payload.candidate;
         state.selectedSubmission = action.payload.submission;
+      })
+      .addCase(fetchCandidate.rejected, (state, action) => {
+        state.currentStatus = 'failed';
+        state.error = action.payload?.message || 'Failed to load';
       })
       .addCase(createCandidate.pending, (state) => { state.createStatus = 'loading'; })
       .addCase(createCandidate.fulfilled, (state, action) => {

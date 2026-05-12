@@ -11,6 +11,7 @@ import accountSetupReducer from '@/features/accountSetup/accountSetupSlice';
 import myInterviewsReducer from '@/features/myInterviews/myInterviewsSlice';
 import reviewEditRequestsReducer from '@/features/reviewEditRequests/reviewEditRequestsSlice';
 import reviewsReducer from '@/features/reviews/reviewSlice';
+import jdsReducer from '@/features/jobDescriptions/jobDescriptionsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
     myInterviews: myInterviewsReducer,
     reviewEditRequests: reviewEditRequestsReducer,
     reviews: reviewsReducer,
+    jds: jdsReducer,
   },
   middleware: (getDefault) =>
     getDefault({

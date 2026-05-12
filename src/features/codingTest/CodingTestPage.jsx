@@ -21,6 +21,15 @@ const formatMs = (ms) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
+const tabSwitchKey = (token) => `coding-test:${token}:tabSwitches`;
+
+const readStoredTabSwitches = (token) => {
+  try {
+    const n = parseInt(localStorage.getItem(tabSwitchKey(token)) || '0', 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  } catch { return 0; }
+};
+
 export default function CodingTestPage() {
   const { token } = useParams();
   const dispatch = useDispatch();
@@ -29,7 +38,7 @@ export default function CodingTestPage() {
   const { data, status, error, submitting, submitted } = useSelector((s) => s.codingTest);
   const [current, setCurrent] = useState(0);
   const [perProblem, setPerProblem] = useState({});
-  const [tabSwitches, setTabSwitches] = useState(0);
+  const [tabSwitches, setTabSwitches] = useState(() => readStoredTabSwitches(token));
   const [warnOpen, setWarnOpen] = useState(false);
   const [remainingMs, setRemainingMs] = useState(null);
   const submittedRef = useRef(false);
@@ -74,14 +83,18 @@ export default function CodingTestPage() {
     if (!data) return;
     const onVisibility = () => {
       if (document.hidden) {
-        setTabSwitches((n) => n + 1);
+        setTabSwitches((n) => {
+          const next = n + 1;
+          try { localStorage.setItem(tabSwitchKey(token), String(next)); } catch { /* ignore */ }
+          return next;
+        });
       } else {
         setWarnOpen(true);
       }
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, [data]);
+  }, [data, token]);
 
   useEffect(() => {
     const blockEvt = (e) => { e.preventDefault(); push({ type: 'warn', message: 'Disabled during the test.' }); };
@@ -137,6 +150,7 @@ export default function CodingTestPage() {
     }));
     const action = await dispatch(submitCodingTest({ token, submissions, tabSwitches, autoSubmitted }));
     if (submitCodingTest.fulfilled.match(action)) {
+      try { localStorage.removeItem(tabSwitchKey(token)); } catch { /* ignore */ }
       push({ type: 'success', message: 'Submitted!' });
       navigate(`/coding-test/${token}/submitted`, { replace: true });
     } else {

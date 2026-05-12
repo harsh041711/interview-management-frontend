@@ -18,6 +18,8 @@ import {
   rejectCandidate,
 } from './candidateSlice';
 import ScreeningPanel from './ScreeningPanel';
+import CodingTestPanel from './CodingTestPanel';
+import SendCodingTestModal from './SendCodingTestModal';
 import ReviewPanel from '@/features/reviews/ReviewPanel';
 import './CandidateDetailPage.scss';
 
@@ -29,6 +31,7 @@ export default function CandidateDetailPage() {
   const { current, currentStatus, error } = useSelector((s) => s.candidates);
   const [actBusy, setActBusy] = useState(null); // 'approve' | 'decline' | 'rescreen' | 'sendTest' | 'resend' | 'regenerate' | 'select' | 'reject' | 'delete'
   const [confirmOverride, setConfirmOverride] = useState(null); // 'approve' | 'decline' | null
+  const [codingTestOpen, setCodingTestOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCandidate(id));
@@ -209,6 +212,11 @@ export default function CandidateDetailPage() {
             <Button variant="ghost" onClick={onReject} loading={actBusy === 'reject'}>Reject</Button>
           </>
         )}
+        {['resume_approved', 'pending', 'completed', 'shortlisted'].includes(c.status) && (
+          <Button variant="secondary" onClick={() => setCodingTestOpen(true)}>
+            {c.codingTest?.sentAt ? 'Re-send coding test' : 'Send coding test'}
+          </Button>
+        )}
         <Button variant="ghost" onClick={onDelete} loading={actBusy === 'delete'}>Delete</Button>
       </div>
 
@@ -218,6 +226,8 @@ export default function CandidateDetailPage() {
         onRescreen={onRescreen}
         rescreening={actBusy === 'rescreen'}
       />
+
+      <CodingTestPanel candidate={c} onRefresh={refresh} />
 
       {['awaiting_decision', 'selected_for_culture', 'final_rejected'].includes(c.status) && (
         <ReviewPanel candidateId={c.id} />
@@ -234,6 +244,13 @@ export default function CandidateDetailPage() {
           </div>
         </div>
       )}
+
+      <SendCodingTestModal
+        open={codingTestOpen}
+        candidateId={c.id}
+        onClose={() => setCodingTestOpen(false)}
+        onSent={refresh}
+      />
 
       <Modal
         open={confirmOverride !== null}

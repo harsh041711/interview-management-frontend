@@ -1,0 +1,63 @@
+.schedule-form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
+  &__error {
+    background: $color-danger-soft;
+    border: 1px solid lighten($color-danger, 28%);
+    color: darken($color-danger, 8%);
+    padding: $space-3 $space-4;
+    border-radius: $radius-md;
+    font-size: 14px;
+  }
+
+  &__loading {
+    color: $color-text-muted;
+    font-size: 13px;
+    margin: 0;
+  }
+}
+
+.schedule-form__mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.schedule-form__mode-btn {
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover { border-color: #93c5fd; }
+  &.is-on {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+}
+
+.schedule-form__mode-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.schedule-form__mode-sub {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.schedule-form__hint {
+  font-size: 12px;
+  color: #6366f1;
+  margin-top: 6px;
+  a { color: inherit; text-decoration: underline; }
+}

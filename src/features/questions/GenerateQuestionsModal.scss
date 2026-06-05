@@ -1,0 +1,96 @@
+.genq {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 18px 8px 8px;
+  gap: 10px;
+
+  &__orb {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 30px;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1, #2563eb);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45);
+    animation: genq-pulse 1.6s ease-in-out infinite;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text, #111827);
+    min-height: 22px;
+    animation: genq-fade 0.4s ease;
+  }
+
+  &__sub {
+    font-size: 13px;
+    color: var(--muted, #5b6372);
+    max-width: 360px;
+  }
+
+  &__bar {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--border, #e5e7eb);
+    overflow: hidden;
+    margin-top: 4px;
+
+    span {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 40%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #6366f1, #2563eb);
+      animation: genq-slide 1.2s ease-in-out infinite;
+    }
+  }
+
+  &__dots {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+
+    i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border, #cbd5e1);
+      transition: background 0.3s ease, transform 0.3s ease;
+
+      &.is-done { background: #16a34a; }
+      &.is-active { background: #2563eb; transform: scale(1.25); }
+    }
+  }
+
+  &__hint {
+    font-size: 12px;
+    color: var(--muted, #8a909c);
+    margin-top: 2px;
+  }
+}
+
+@keyframes genq-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45); transform: scale(1); }
+  70%  { box-shadow: 0 0 0 16px rgba(99, 102, 241, 0); transform: scale(1.04); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); transform: scale(1); }
+}
+
+@keyframes genq-slide {
+  0%   { left: -40%; }
+  100% { left: 100%; }
+}
+
+@keyframes genq-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
